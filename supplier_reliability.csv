@@ -1,0 +1,7 @@
+run_date,supplier_id,name,country,on_time_rate,mean_delay_days,delay_std_days,reliability_score,n_orders,parts_supplied
+2026-09-28,S01,Yazaki Harness Co,Mexico,0.717,0.87,2.27,75.4,120,2
+2026-09-28,S02,Bosch Sensortec,Germany,0.6,1.21,2.34,68.2,120,2
+2026-09-28,S03,Delphi Connectors,Poland,0.4,3.18,5.73,44.9,120,2
+2026-09-28,S04,Shenzhen Micro Elec,China,0.27,7.51,9.46,24.7,174,3
+2026-09-28,S05,Kolkata Cable Works,India,0.361,4.61,6.65,39.5,119,2
+2026-09-28,S06,Nagoya Precision,Japan,0.842,0.81,2.33,82.7,120,2

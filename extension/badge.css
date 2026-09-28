@@ -1,0 +1,7 @@
+.prb-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 10px;
+  font: 600 11px/1.5 system-ui, Arial, sans-serif; color: #fff; vertical-align: middle;
+  white-space: nowrap; cursor: help;
+}
+.prb-loading { background: #999; }
+.prb-unknown { background: #777; font-weight: 400; }

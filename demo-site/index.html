@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply Chain Bottleneck Predictor</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--card:#f5f6f8;--line:#e2e4e8;--hi:#D62728;--med:#FF9F1C;--lo:#2CA02C}
+@media (prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#eee;--mut:#9aa0a6;--card:#1e2126;--line:#2f333a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,Arial,sans-serif}
+main{max-width:980px;margin:0 auto;padding:32px 20px}
+h1{margin:0 0 4px;font-size:28px}h2{margin:36px 0 12px;font-size:20px}p{color:var(--mut);margin:6px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.card{background:var(--card);border-radius:10px;padding:14px 16px}.card b{display:block;font-size:26px;color:var(--fg)}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--mut);font-weight:600}
+.b{display:inline-block;padding:1px 9px;border-radius:10px;color:#fff;font-size:12px;font-weight:600}
+.High{background:var(--hi)}.Medium{background:var(--med)}.Low{background:var(--lo)}
+.bar{background:var(--line);border-radius:6px;height:10px;width:160px;display:inline-block;vertical-align:middle}.bar i{display:block;height:100%;border-radius:6px;background:#3b7ddd}
+input{padding:9px 12px;font-size:15px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);width:220px}
+button{padding:9px 16px;font-size:15px;border:0;border-radius:8px;background:#3b7ddd;color:#fff;cursor:pointer}
+pre{background:var(--card);padding:14px;border-radius:10px;overflow-x:auto;font-size:13px;min-height:60px}
+a{color:#3b7ddd}footer{margin-top:40px;color:var(--mut);font-size:13px}
+</style></head><body><main>
+<h1>Supply Chain Bottleneck Predictor</h1>
+<p>Predicts automotive parts shortages before production halts, using BOM explosion, supplier lead-time variance, and shortage probability. All data on this page is synthetic.</p>
+<div class="cards" id="kpis"></div>
+
+<h2>Parts at risk</h2><div class="wrap"><table id="parts"></table></div>
+
+<h2>Supplier reliability</h2><div class="wrap"><table id="sups"></table></div>
+
+<h2>Expected stoppage cost by vehicle line</h2><div class="wrap"><table id="lines"></table></div>
+
+<h2>Try the API</h2>
+<p>This mimics <code>/api/part-risk?part_id=XYZ</code>. Try SN-2004, WH-1003, EL-4001 or WH-1002.</p>
+<input id="pid" value="SN-2004" aria-label="Part ID"> <button id="go">Look up</button>
+<pre id="out"></pre>
+
+<footer>Full code (Python model, FastAPI, scheduler, SQL, Chrome extension): <a href="https://github.com/luvrajora/supply-chain-risk-predictor">GitHub</a> · Model run: <span id="rd"></span></footer>
+</main>
+<script>
+const D = {"run_date": "2026-09-28", "parts": [{"part_id": "SN-2004", "description": "Radar module", "supplier": "Shenzhen Micro Elec", "shortage_prob": 0.742, "risk_band": "High", "days_of_cover": 45.4, "lead_p50": 51.0, "lead_p90": 58.6, "reorder_by": "2026-09-28", "expected_loss": 12788730.0}, {"part_id": "WH-1003", "description": "Engine bay harness", "supplier": "Kolkata Cable Works", "shortage_prob": 0.535, "risk_band": "High", "days_of_cover": 20.9, "lead_p50": 21.0, "lead_p90": 30.2, "reorder_by": "2026-09-28", "expected_loss": 4875747.0}, {"part_id": "EL-4001", "description": "Body control module", "supplier": "Shenzhen Micro Elec", "shortage_prob": 0.143, "risk_band": "Medium", "days_of_cover": 59.0, "lead_p50": 45.5, "lead_p90": 62.5, "reorder_by": "2026-09-28", "expected_loss": 4188447.0}, {"part_id": "CN-3002", "description": "Sealed ECU connector", "supplier": "Delphi Connectors", "shortage_prob": 0.115, "risk_band": "Low", "days_of_cover": 23.6, "lead_p50": 16.5, "lead_p90": 24.0, "reorder_by": "2026-09-28", "expected_loss": 2392925.0}, {"part_id": "SN-2003", "description": "Tire pressure sensor", "supplier": "Shenzhen Micro Elec", "shortage_prob": 0.1, "risk_band": "Low", "days_of_cover": 49.5, "lead_p50": 35.0, "lead_p90": 47.6, "reorder_by": "2026-09-29", "expected_loss": 1732912.0}, {"part_id": "CN-3003", "description": "Battery terminal", "supplier": "Kolkata Cable Works", "shortage_prob": 0.073, "risk_band": "Low", "days_of_cover": 25.1, "lead_p50": 16.0, "lead_p90": 23.1, "reorder_by": "2026-09-29", "expected_loss": 1153039.0}, {"part_id": "WH-1001", "description": "Main wiring harness A", "supplier": "Yazaki Harness Co", "shortage_prob": 0.005, "risk_band": "Low", "days_of_cover": 29.1, "lead_p50": 15.0, "lead_p90": 17.0, "reorder_by": "2026-10-10", "expected_loss": 0.0}, {"part_id": "EL-4002", "description": "Fuse box assembly", "supplier": "Nagoya Precision", "shortage_prob": 0.0, "risk_band": "Low", "days_of_cover": 34.5, "lead_p50": 17.0, "lead_p90": 18.0, "reorder_by": "2026-10-14", "expected_loss": 0.0}, {"part_id": "CN-3001", "description": "12-pin connector", "supplier": "Delphi Connectors", "shortage_prob": 0.0, "risk_band": "Low", "days_of_cover": 38.8, "lead_p50": 12.5, "lead_p90": 16.1, "reorder_by": "2026-10-20", "expected_loss": 0.0}, {"part_id": "SN-2002", "description": "Oxygen sensor", "supplier": "Bosch Sensortec", "shortage_prob": 0.0, "risk_band": "Low", "days_of_cover": 42.9, "lead_p50": 26.0, "lead_p90": 28.0, "reorder_by": "2026-10-12", "expected_loss": 0.0}, {"part_id": "SN-2001", "description": "Wheel speed sensor", "supplier": "Bosch Sensortec", "shortage_prob": 0.0, "risk_band": "Low", "days_of_cover": 43.2, "lead_p50": 22.0, "lead_p90": 24.1, "reorder_by": "2026-10-17", "expected_loss": 0.0}, {"part_id": "EL-4003", "description": "Relay 40A", "supplier": "Nagoya Precision", "shortage_prob": 0.0, "risk_band": "Low", "days_of_cover": 38.7, "lead_p50": 11.0, "lead_p90": 12.0, "reorder_by": "2026-10-24", "expected_loss": 0.0}, {"part_id": "WH-1002", "description": "Door wiring harness", "supplier": "Yazaki Harness Co", "shortage_prob": 0.0, "risk_band": "Low", "days_of_cover": 39.9, "lead_p50": 13.0, "lead_p90": 14.1, "reorder_by": "2026-10-23", "expected_loss": 0.0}], "suppliers": [{"name": "Shenzhen Micro Elec", "country": "China", "on_time_rate": 0.27, "mean_delay_days": 7.51, "reliability_score": 24.7}, {"name": "Kolkata Cable Works", "country": "India", "on_time_rate": 0.361, "mean_delay_days": 4.61, "reliability_score": 39.5}, {"name": "Delphi Connectors", "country": "Poland", "on_time_rate": 0.4, "mean_delay_days": 3.18, "reliability_score": 44.9}, {"name": "Bosch Sensortec", "country": "Germany", "on_time_rate": 0.6, "mean_delay_days": 1.21, "reliability_score": 68.2}, {"name": "Yazaki Harness Co", "country": "Mexico", "on_time_rate": 0.717, "mean_delay_days": 0.87, "reliability_score": 75.4}, {"name": "Nagoya Precision", "country": "Japan", "on_time_rate": 0.842, "mean_delay_days": 0.81, "reliability_score": 82.7}], "lines": [{"line_name": "EV platform", "expected_stoppage_cost": 13893280.0}, {"line_name": "SUV platform", "expected_stoppage_cost": 11090560.0}, {"line_name": "Sedan platform", "expected_stoppage_cost": 4018880.0}]};
+const $ = id => document.getElementById(id), fmt = n => "$" + Math.round(n).toLocaleString("en-US");
+const badge = b => `<span class="b ${b}">${b}</span>`;
+$("rd").textContent = D.run_date;
+const high = D.parts.filter(p => p.risk_band === "High").length;
+$("kpis").innerHTML =
+  `<div class="card"><b>${D.parts.length}</b>parts monitored</div>
+   <div class="card"><b>${high}</b>high-risk parts</div>
+   <div class="card"><b>${fmt(D.parts.reduce((s, p) => s + p.expected_loss, 0))}</b>total expected loss</div>`;
+$("parts").innerHTML = "<tr><th>Part</th><th>Description</th><th>Supplier</th><th>Shortage prob.</th><th>Risk</th><th>Days of cover</th><th>Lead time (P50 / P90)</th><th>Reorder by</th></tr>" +
+  D.parts.map(p => `<tr><td>${p.part_id}</td><td>${p.description}</td><td>${p.supplier}</td><td>${(p.shortage_prob*100).toFixed(1)}%</td><td>${badge(p.risk_band)}</td><td>${p.days_of_cover}</td><td>${Math.round(p.lead_p50)} / ${Math.round(p.lead_p90)} d</td><td>${p.reorder_by}</td></tr>`).join("");
+$("sups").innerHTML = "<tr><th>Supplier</th><th>Country</th><th>On-time</th><th>Mean delay</th><th>Reliability score</th></tr>" +
+  D.suppliers.map(s => `<tr><td>${s.name}</td><td>${s.country}</td><td>${Math.round(s.on_time_rate*100)}%</td><td>${s.mean_delay_days} d</td><td><span class="bar"><i style="width:${s.reliability_score}%"></i></span> ${s.reliability_score}</td></tr>`).join("");
+$("lines").innerHTML = "<tr><th>Line</th><th>Expected stoppage cost</th></tr>" +
+  D.lines.map(l => `<tr><td>${l.line_name}</td><td>${fmt(l.expected_stoppage_cost)}</td></tr>`).join("");
+function lookup() {
+  const id = $("pid").value.trim().toUpperCase().replace(/[\s_]/g, "-");
+  const p = D.parts.find(x => x.part_id === id);
+  $("out").textContent = p ? JSON.stringify({part_id:p.part_id, supplier:p.supplier, shortage_probability:p.shortage_prob, risk_band:p.risk_band,
+    recommended_reorder_date:p.reorder_by, days_of_cover:p.days_of_cover, estimated_lead_time_days:{typical:p.lead_p50, worst_case_p90:p.lead_p90}}, null, 2)
+    : JSON.stringify({detail: `No risk score for part '${id}'`}, null, 2);
+}
+$("go").onclick = lookup; $("pid").onkeydown = e => e.key === "Enter" && lookup(); lookup();
+</script></body></html>

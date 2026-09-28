@@ -1,0 +1,14 @@
+run_date,part_id,description,category,supplier,country,shortage_prob,risk_band,days_of_cover,lead_p50,lead_p90,reorder_by,reorder_overdue,expected_gap_days,expected_loss,on_hand,on_order
+2026-09-28,CN-3001,12-pin connector,connector,Delphi Connectors,Poland,0.0,Low,38.8,12.5,16.1,2026-10-20,0,0.0,0.0,173709.0,107175.0
+2026-09-28,CN-3002,Sealed ECU connector,connector,Delphi Connectors,Poland,0.1154,Low,23.6,16.5,24.0,2026-09-28,1,0.93,2392925.0,21714.0,21006.0
+2026-09-28,CN-3003,Battery terminal,connector,Kolkata Cable Works,India,0.0726,Low,25.1,16.0,23.1,2026-09-29,0,0.66,1153039.0,29447.0,9428.0
+2026-09-28,EL-4001,Body control module,electronic,Shenzhen Micro Elec,China,0.1429,Medium,59.0,45.5,62.5,2026-09-28,1,1.63,4188447.0,47643.0,16235.0
+2026-09-28,EL-4002,Fuse box assembly,electronic,Nagoya Precision,Japan,0.0,Low,34.5,17.0,18.0,2026-10-14,0,0.0,0.0,25333.0,5862.0
+2026-09-28,EL-4003,Relay 40A,electronic,Nagoya Precision,Japan,0.0,Low,38.7,11.0,12.0,2026-10-24,0,0.0,0.0,179137.0,30744.0
+2026-09-28,SN-2001,Wheel speed sensor,sensor,Bosch Sensortec,Germany,0.0,Low,43.2,22.0,24.1,2026-10-17,0,0.0,0.0,108568.0,47758.0
+2026-09-28,SN-2002,Oxygen sensor,sensor,Bosch Sensortec,Germany,0.0,Low,42.9,26.0,28.0,2026-10-12,0,0.0,0.0,14239.0,3742.0
+2026-09-28,SN-2003,Tire pressure sensor,sensor,Shenzhen Micro Elec,China,0.1,Low,49.5,35.0,47.60000000000001,2026-09-29,0,0.88,1732912.0,73862.0,22407.0
+2026-09-28,SN-2004,Radar module,sensor,Shenzhen Micro Elec,China,0.7421,High,45.4,51.0,58.60000000000001,2026-09-28,1,6.5,12788730.0,21912.0,8232.0
+2026-09-28,WH-1001,Main wiring harness A,harness,Yazaki Harness Co,Mexico,0.0054,Low,29.1,15.0,17.0,2026-10-10,0,0.0,0.0,18095.0,8244.0
+2026-09-28,WH-1002,Door wiring harness,harness,Yazaki Harness Co,Mexico,0.0,Low,39.9,13.0,14.100000000000001,2026-10-23,0,0.0,0.0,94092.0,50222.0
+2026-09-28,WH-1003,Engine bay harness,harness,Kolkata Cable Works,India,0.5346,High,20.9,21.0,30.200000000000003,2026-09-28,1,3.39,4875747.0,7993.0,7206.0
