@@ -19,6 +19,8 @@ input{padding:9px 12px;font-size:15px;border:1px solid var(--line);border-radius
 button{padding:9px 16px;font-size:15px;border:0;border-radius:8px;background:#3b7ddd;color:#fff;cursor:pointer}
 pre{background:var(--card);padding:14px;border-radius:10px;overflow-x:auto;font-size:13px;min-height:60px}
 a{color:#3b7ddd}footer{margin-top:40px;color:var(--mut);font-size:13px}
+.dash-img{width:100%;border-radius:10px;margin-bottom:16px;display:block;border:1px solid var(--line)}
+.dash-caption{margin:-10px 0 20px;font-size:13px}
 </style></head><body><main>
 <h1>Supply Chain Bottleneck Predictor</h1>
 <p>Predicts automotive parts shortages before production halts, using BOM explosion, supplier lead-time variance, and shortage probability. All data on this page is synthetic.</p>
@@ -29,6 +31,15 @@ a{color:#3b7ddd}footer{margin-top:40px;color:var(--mut);font-size:13px}
 <h2>Supplier reliability</h2><div class="wrap"><table id="sups"></table></div>
 
 <h2>Expected stoppage cost by vehicle line</h2><div class="wrap"><table id="lines"></table></div>
+
+<h2>Power BI dashboard</h2>
+<p>Screenshots of the full Power BI report. Interactive filters and drill-downs are available in the .pbix file on GitHub.</p>
+<img class="dash-img" src="screenshots/parts-at-risk.png" alt="Power BI: Parts at Risk page, showing shortage probability and risk band per part">
+<p class="dash-caption">Parts at Risk — sortable table with colour-coded risk band, plus high-risk count and total expected loss cards.</p>
+<img class="dash-img" src="screenshots/suppliers.png" alt="Power BI: Supplier Reliability page, showing reliability score by supplier">
+<p class="dash-caption">Supplier Reliability — reliability score and on-time / delay stats per supplier.</p>
+<img class="dash-img" src="screenshots/financial-impact.png" alt="Power BI: Financial Impact page, showing expected stoppage cost by vehicle line">
+<p class="dash-caption">Financial Impact — expected stoppage cost by vehicle line and contributing part.</p>
 
 <h2>Try the API</h2>
 <p>This mimics <code>/api/part-risk?part_id=XYZ</code>. Try SN-2004, WH-1003, EL-4001 or WH-1002.</p>
