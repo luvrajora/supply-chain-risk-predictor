@@ -2,74 +2,338 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Supply Chain Bottleneck Predictor</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--card:#f5f6f8;--line:#e2e4e8;--hi:#D62728;--med:#FF9F1C;--lo:#2CA02C}
-@media (prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#eee;--mut:#9aa0a6;--card:#1e2126;--line:#2f333a}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,Arial,sans-serif}
-main{max-width:980px;margin:0 auto;padding:32px 20px}
-h1{margin:0 0 4px;font-size:28px}h2{margin:36px 0 12px;font-size:20px}p{color:var(--mut);margin:6px 0}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
-.card{background:var(--card);border-radius:10px;padding:14px 16px}.card b{display:block;font-size:26px;color:var(--fg)}
-.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--mut);font-weight:600}
-.b{display:inline-block;padding:1px 9px;border-radius:10px;color:#fff;font-size:12px;font-weight:600}
-.High{background:var(--hi)}.Medium{background:var(--med)}.Low{background:var(--lo)}
-.bar{background:var(--line);border-radius:6px;height:10px;width:160px;display:inline-block;vertical-align:middle}.bar i{display:block;height:100%;border-radius:6px;background:#3b7ddd}
-input{padding:9px 12px;font-size:15px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);width:220px}
-button{padding:9px 16px;font-size:15px;border:0;border-radius:8px;background:#3b7ddd;color:#fff;cursor:pointer}
-pre{background:var(--card);padding:14px;border-radius:10px;overflow-x:auto;font-size:13px;min-height:60px}
-a{color:#3b7ddd}footer{margin-top:40px;color:var(--mut);font-size:13px}
-.dash-img{width:100%;border-radius:10px;margin-bottom:16px;display:block;border:1px solid var(--line)}
-.dash-caption{margin:-10px 0 20px;font-size:13px}
-</style></head><body><main>
-<h1>Supply Chain Bottleneck Predictor</h1>
-<p>Predicts automotive parts shortages before production halts, using BOM explosion, supplier lead-time variance, and shortage probability. All data on this page is synthetic.</p>
-<div class="cards" id="kpis"></div>
+:root{
+  --bg:#101216; --panel:#171b22; --line:#282e38; --fg:#eef0f3; --mut:#8b93a1;
+  --amber:#ffb020; --blue:#5aa9ff; --rose:#ff5c78; --cyan:#2dd4bf;
+  --hi:#ff4d5e; --med:#ffb020; --lo:#34d399;
+  --sans:'Space Grotesk',system-ui,Arial,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:light){
+  :root{ --bg:#f7f6f2; --panel:#fff; --line:#e0ded6; --fg:#181a15; --mut:#6d6f64; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 var(--sans);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:1000px;margin:0 auto;padding:0 20px 90px}
+a{color:var(--amber)}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-<h2>Parts at risk</h2><div class="wrap"><table id="parts"></table></div>
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
+.reveal.show{opacity:1;transform:none}
 
-<h2>Supplier reliability</h2><div class="wrap"><table id="sups"></table></div>
+header.top{padding:56px 0 32px;background:radial-gradient(ellipse 700px 260px at 20% -10%,rgba(255,176,32,.16),transparent 70%),
+  radial-gradient(ellipse 500px 220px at 90% 0%,rgba(90,169,255,.10),transparent 70%);border-bottom:1px solid var(--line)}
+h1{font-size:30px;margin:0 0 10px;letter-spacing:-0.01em}
+header.top p{color:var(--mut);max-width:58ch;margin:0}
 
-<h2>Expected stoppage cost by vehicle line</h2><div class="wrap"><table id="lines"></table></div>
+.stats{display:flex;gap:0;border:1px solid var(--line);margin-top:28px;border-radius:6px;overflow:hidden}
+.stat{flex:1;padding:18px 20px;border-right:1px solid var(--line);background:var(--panel)}
+.stat:last-child{border-right:none}
+.stat b{display:block;font:700 30px/1.1 var(--mono);margin-bottom:4px;color:var(--amber)}
+.stat.warn b{color:var(--hi)}
+.stat span{color:var(--mut);font-size:12.5px}
 
-<h2>Power BI dashboard</h2>
-<p>Screenshots of the full Power BI report. Interactive filters and drill-downs are available in the .pbix file on GitHub.</p>
-<img class="dash-img" src="screenshots/parts-at-risk.png" alt="Power BI: Parts at Risk page, showing shortage probability and risk band per part">
-<p class="dash-caption">Parts at Risk — sortable table with colour-coded risk band, plus high-risk count and total expected loss cards.</p>
-<img class="dash-img" src="screenshots/suppliers.png" alt="Power BI: Supplier Reliability page, showing reliability score by supplier">
-<p class="dash-caption">Supplier Reliability — reliability score and on-time / delay stats per supplier.</p>
-<img class="dash-img" src="screenshots/financial-impact.png" alt="Power BI: Financial Impact page, showing expected stoppage cost by vehicle line">
-<p class="dash-caption">Financial Impact — expected stoppage cost by vehicle line and contributing part.</p>
+section{margin-top:56px}
+.sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.sec-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.sec-dot.amber{background:var(--amber)}.sec-dot.blue{background:var(--blue)}
+.sec-dot.rose{background:var(--rose)}.sec-dot.cyan{background:var(--cyan)}
+h2{font-size:17px;margin:0;font-weight:700}
+.lede{color:var(--mut);font-size:13.5px;margin:6px 0 16px}
 
-<h2>Try the API</h2>
-<p>This mimics <code>/api/part-risk?part_id=XYZ</code>. Try SN-2004, WH-1003, EL-4001 or WH-1002.</p>
-<input id="pid" value="SN-2004" aria-label="Part ID"> <button id="go">Look up</button>
-<pre id="out"></pre>
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.chip{font:500 12.5px var(--sans);padding:6px 13px;border:1px solid var(--line);background:var(--panel);color:var(--mut);
+  border-radius:20px;cursor:pointer;transition:border-color .15s,color .15s}
+.chip[aria-pressed="true"]{border-color:var(--amber);color:var(--fg);background:rgba(255,176,32,.1)}
+.chip.dot::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.chip.High.dot::before{background:var(--hi)}.chip.Medium.dot::before{background:var(--med)}.chip.Low.dot::before{background:var(--lo)}
+.search{margin-left:auto;font:13px var(--mono);padding:7px 12px;border:1px solid var(--line);background:var(--panel);
+  color:var(--fg);border-radius:20px;min-width:190px}
 
-<footer>Full code (Python model, FastAPI, scheduler, SQL, Chrome extension): <a href="https://github.com/luvrajora/supply-chain-risk-predictor">GitHub</a> · Model run: <span id="rd"></span></footer>
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:10px 12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+th{color:var(--mut);font:600 12px var(--sans);border-bottom:1px solid var(--line);cursor:pointer;user-select:none;background:var(--panel)}
+th:hover{color:var(--fg)}
+th.sorted::after{content:" ▾";color:var(--amber)}
+th.sorted.asc::after{content:" ▴"}
+tbody tr{border-bottom:1px solid var(--line);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--panel)}
+.mono{font-family:var(--mono)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 11.5px var(--sans);padding:3px 10px;border-radius:20px;color:#0b0c0f}
+.pill.High{background:var(--hi);animation:pulse 2.2s ease-in-out infinite}
+.pill.Medium{background:var(--med)}
+.pill.Low{background:var(--lo)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.5)}50%{box-shadow:0 0 0 5px rgba(255,77,94,0)}}
+.overdue{color:var(--hi)}
+
+.bars{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.barrow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:13.5px;background:var(--panel)}
+.barrow:last-child{border-bottom:none}
+.barrow .name{width:160px;flex-shrink:0}
+.barrow .country{width:90px;flex-shrink:0;color:var(--mut);font-size:12px}
+.barrow .track{flex:1;height:9px;background:var(--line);border-radius:5px;overflow:hidden}
+.barrow .fill{height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,var(--blue),#8fc4ff);transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.barrow .val{width:110px;text-align:right;font-family:var(--mono);color:var(--mut);font-size:12.5px}
+
+.finrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13.5px;background:var(--panel)}
+.finrow:last-child{border-bottom:none}
+.finrow .name{width:140px;flex-shrink:0}
+.finrow .track{flex:1;height:9px;background:var(--line);border-radius:5px;overflow:hidden}
+.finrow .fill{height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,var(--rose),#ff8fa3);transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.finrow .val{width:110px;text-align:right;font-family:var(--mono)}
+
+.dash-img{width:100%;display:block;border:1px solid var(--line);border-radius:6px}
+.dash-caption{margin:8px 0 24px;font-size:12.5px;color:var(--mut)}
+
+.lookup{border:1px solid var(--line);border-radius:10px;padding:22px;background:var(--panel);
+  background-image:radial-gradient(ellipse 300px 200px at 100% 0%,rgba(45,212,191,.08),transparent 70%)}
+.lookup-row{display:flex;gap:8px;flex-wrap:wrap}
+input#pid{flex:1;min-width:160px;font:14px var(--mono);padding:10px 14px;border:1px solid var(--line);
+  background:var(--bg);color:var(--fg);border-radius:20px}
+button#go{font:700 13px var(--sans);padding:10px 22px;border:0;border-radius:20px;
+  background:var(--cyan);color:#0b0c0f;cursor:pointer;transition:filter .15s,transform .15s}
+button#go:hover{filter:brightness(1.1)}
+button#go:active{transform:scale(.97)}
+
+.scan{display:none;gap:26px;align-items:center;margin-top:22px;flex-wrap:wrap}
+.scan.show{display:flex}
+.gauge-wrap{position:relative;width:128px;height:128px;flex-shrink:0}
+.gauge{width:128px;height:128px;transform:rotate(-90deg)}
+.gauge .track{fill:none;stroke:var(--line);stroke-width:11}
+.gauge .fill{fill:none;stroke-width:11;stroke-linecap:round;stroke-dasharray:339.3;stroke-dashoffset:339.3;
+  transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1),stroke .3s}
+.gauge-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-label b{font:700 26px var(--mono)}
+.gauge-label span{font-size:10.5px;color:var(--mut);letter-spacing:.02em}
+.scan-details{flex:1;min-width:220px;display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+.scan-details .k{color:var(--mut);font-size:11.5px;margin-bottom:2px}
+.scan-details .v{font-family:var(--mono);font-size:13.5px}
+.scan-details .v.full{grid-column:1/-1}
+.scan-empty{color:var(--mut);font-size:13px;margin-top:14px}
+details.raw{margin-top:16px}
+details.raw summary{cursor:pointer;color:var(--mut);font-size:12px;user-select:none}
+details.raw pre{margin-top:8px;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+  padding:12px;overflow-x:auto;font:12px/1.6 var(--mono)}
+
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px}
+</style></head>
+<body><main>
+
+<header class="top reveal">
+  <h1>Supply Chain Bottleneck Predictor</h1>
+  <p>Predicts automotive parts shortages before production halts, using BOM explosion, supplier lead-time variance, and shortage probability. All data on this page is synthetic.</p>
+  <div class="stats" id="kpis"></div>
+</header>
+
+<section class="reveal" id="parts-section">
+  <div class="sec-head"><span class="sec-dot amber"></span><h2>Parts at risk</h2></div>
+  <p class="lede">Click a column to sort. Filter by risk band or search by part, description, or supplier.</p>
+  <div class="controls">
+    <button class="chip" data-band="all" aria-pressed="true">All</button>
+    <button class="chip dot High" data-band="High" aria-pressed="false">High</button>
+    <button class="chip dot Medium" data-band="Medium" aria-pressed="false">Medium</button>
+    <button class="chip dot Low" data-band="Low" aria-pressed="false">Low</button>
+    <input class="search" id="search" type="text" placeholder="Search parts..." aria-label="Search parts">
+  </div>
+  <div class="wrap"><table id="parts">
+    <thead><tr>
+      <th data-key="part_id">Part</th><th data-key="description">Description</th><th data-key="supplier">Supplier</th>
+      <th data-key="shortage_prob" class="sorted">Shortage prob.</th><th data-key="risk_band">Risk</th>
+      <th data-key="days_of_cover">Days of cover</th><th>Lead time (P50/P90)</th><th data-key="reorder_by">Reorder by</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<section class="reveal">
+  <div class="sec-head"><span class="sec-dot blue"></span><h2>Supplier reliability</h2></div>
+  <p class="lede">0–100 score weighted 60% on-time delivery rate, 40% delay consistency.</p>
+  <div class="bars" id="sups"></div>
+</section>
+
+<section class="reveal">
+  <div class="sec-head"><span class="sec-dot rose"></span><h2>Expected stoppage cost by vehicle line</h2></div>
+  <p class="lede">Expected gap days × stoppage cost per hour, summed by vehicle platform.</p>
+  <div class="bars" id="lines"></div>
+</section>
+
+<section class="reveal">
+  <div class="sec-head"><span class="sec-dot amber"></span><h2>Power BI dashboard</h2></div>
+  <p class="lede">Screenshots of the full report. The interactive .pbix file is on GitHub.</p>
+  <img class="dash-img" src="screenshots/parts-at-risk.png" alt="Power BI: Parts at Risk page, showing shortage probability and risk band per part">
+  <p class="dash-caption">Parts at Risk — sortable table with risk band, plus high-risk count and total expected loss cards.</p>
+  <img class="dash-img" src="screenshots/suppliers.png" alt="Power BI: Supplier Reliability page, showing reliability score by supplier">
+  <p class="dash-caption">Supplier Reliability — reliability score and on-time / delay stats per supplier.</p>
+  <img class="dash-img" src="screenshots/financial-impact.png" alt="Power BI: Financial Impact page, showing expected stoppage cost by vehicle line">
+  <p class="dash-caption">Financial Impact — expected stoppage cost by vehicle line and contributing part.</p>
+</section>
+
+<section class="reveal">
+  <div class="sec-head"><span class="sec-dot cyan"></span><h2>Look up a part</h2></div>
+  <p class="lede">Mirrors <code>GET /api/part-risk?part_id=XYZ</code> from the live API.</p>
+  <div class="lookup">
+    <div class="lookup-row">
+      <input id="pid" type="text" list="part-ids" value="SN-2004" autocomplete="off" aria-label="Part ID">
+      <datalist id="part-ids"></datalist>
+      <button id="go" type="button">Scan part</button>
+    </div>
+    <p class="scan-empty" id="scanEmpty"></p>
+    <div class="scan" id="scan">
+      <div class="gauge-wrap">
+        <svg class="gauge" viewBox="0 0 128 128">
+          <circle class="track" cx="64" cy="64" r="54"/>
+          <circle class="fill" id="gaugeFill" cx="64" cy="64" r="54"/>
+        </svg>
+        <div class="gauge-label"><b id="gaugePct">—</b><span>SHORTAGE RISK</span></div>
+      </div>
+      <div class="scan-details" id="scanDetails"></div>
+    </div>
+    <details class="raw"><summary>Raw JSON</summary><pre id="out"></pre></details>
+  </div>
+</section>
+
+<footer>Full code (Python model, FastAPI, scheduler, SQL, Chrome extension): <a href="https://github.com/luvrajora/supply-chain-risk-predictor">GitHub</a> · Model run: <span id="rd" class="mono"></span></footer>
 </main>
 <script>
 const D = __DATA__;
-const $ = id => document.getElementById(id), fmt = n => "$" + Math.round(n).toLocaleString("en-US");
-const badge = b => `<span class="b ${b}">${b}</span>`;
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => "$" + Math.round(n).toLocaleString("en-US");
+const RISK_COLOR = {High:"#ff4d5e", Medium:"#ffb020", Low:"#34d399"};
+
 $("rd").textContent = D.run_date;
+
+// Count-up KPI numbers
+function countUp(el, to, prefix="", suffix="", duration=800) {
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = prefix + Math.round(to * eased).toLocaleString("en-US") + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 const high = D.parts.filter(p => p.risk_band === "High").length;
+const totalLoss = D.parts.reduce((s,p) => s + p.expected_loss, 0);
 $("kpis").innerHTML =
-  `<div class="card"><b>${D.parts.length}</b>parts monitored</div>
-   <div class="card"><b>${high}</b>high-risk parts</div>
-   <div class="card"><b>${fmt(D.parts.reduce((s, p) => s + p.expected_loss, 0))}</b>total expected loss</div>`;
-$("parts").innerHTML = "<tr><th>Part</th><th>Description</th><th>Supplier</th><th>Shortage prob.</th><th>Risk</th><th>Days of cover</th><th>Lead time (P50 / P90)</th><th>Reorder by</th></tr>" +
-  D.parts.map(p => `<tr><td>${p.part_id}</td><td>${p.description}</td><td>${p.supplier}</td><td>${(p.shortage_prob*100).toFixed(1)}%</td><td>${badge(p.risk_band)}</td><td>${p.days_of_cover}</td><td>${Math.round(p.lead_p50)} / ${Math.round(p.lead_p90)} d</td><td>${p.reorder_by}</td></tr>`).join("");
-$("sups").innerHTML = "<tr><th>Supplier</th><th>Country</th><th>On-time</th><th>Mean delay</th><th>Reliability score</th></tr>" +
-  D.suppliers.map(s => `<tr><td>${s.name}</td><td>${s.country}</td><td>${Math.round(s.on_time_rate*100)}%</td><td>${s.mean_delay_days} d</td><td><span class="bar"><i style="width:${s.reliability_score}%"></i></span> ${s.reliability_score}</td></tr>`).join("");
-$("lines").innerHTML = "<tr><th>Line</th><th>Expected stoppage cost</th></tr>" +
-  D.lines.map(l => `<tr><td>${l.line_name}</td><td>${fmt(l.expected_stoppage_cost)}</td></tr>`).join("");
+  `<div class="stat"><b id="kpi1">0</b><span>parts monitored</span></div>
+   <div class="stat warn"><b id="kpi2">0</b><span>high-risk parts</span></div>
+   <div class="stat"><b id="kpi3">$0</b><span>total expected loss</span></div>`;
+countUp($("kpi1"), D.parts.length);
+countUp($("kpi2"), high);
+countUp($("kpi3"), totalLoss, "$");
+
+// ---- Parts table: filter + search + sort ----
+let band = "all", query = "", sortKey = "shortage_prob", sortAsc = false;
+
+function rowsToShow() {
+  return D.parts
+    .filter(p => band === "all" || p.risk_band === band)
+    .filter(p => !query || (p.part_id + p.description + p.supplier).toLowerCase().includes(query))
+    .sort((a, b) => {
+      const va = a[sortKey], vb = b[sortKey];
+      const cmp = typeof va === "string" ? va.localeCompare(vb) : va - vb;
+      return sortAsc ? cmp : -cmp;
+    });
+}
+
+function renderParts() {
+  const rows = rowsToShow();
+  $("parts").querySelector("tbody").innerHTML = rows.length ? rows.map(p => `
+    <tr>
+      <td class="mono">${p.part_id}</td><td>${p.description}</td><td>${p.supplier}</td>
+      <td class="mono">${(p.shortage_prob*100).toFixed(1)}%</td>
+      <td><span class="pill ${p.risk_band}">${p.risk_band}</span></td>
+      <td class="mono">${p.days_of_cover}</td>
+      <td class="mono">${Math.round(p.lead_p50)} / ${Math.round(p.lead_p90)} d</td>
+      <td class="mono ${p.reorder_by <= D.run_date ? "overdue" : ""}">${p.reorder_by}</td>
+    </tr>`).join("")
+    : `<tr><td colspan="8" style="color:var(--mut);padding:20px 12px">No parts match this filter.</td></tr>`;
+}
+
+document.querySelectorAll(".chip[data-band]").forEach(btn => btn.addEventListener("click", () => {
+  document.querySelectorAll(".chip[data-band]").forEach(b => b.setAttribute("aria-pressed", "false"));
+  btn.setAttribute("aria-pressed", "true");
+  band = btn.dataset.band;
+  renderParts();
+}));
+$("search").addEventListener("input", (e) => { query = e.target.value.trim().toLowerCase(); renderParts(); });
+document.querySelectorAll("#parts th[data-key]").forEach(th => th.addEventListener("click", () => {
+  const key = th.dataset.key;
+  sortAsc = (sortKey === key) ? !sortAsc : false;
+  sortKey = key;
+  document.querySelectorAll("#parts th").forEach(t => t.classList.remove("sorted", "asc"));
+  th.classList.add("sorted"); if (sortAsc) th.classList.add("asc");
+  renderParts();
+}));
+renderParts();
+
+// ---- Supplier bars ----
+const maxScore = Math.max(...D.suppliers.map(s => s.reliability_score), 1);
+$("sups").innerHTML = D.suppliers.slice().sort((a,b) => b.reliability_score - a.reliability_score).map(s => `
+  <div class="barrow">
+    <span class="name">${s.name}</span><span class="country">${s.country}</span>
+    <span class="track"><span class="fill" data-w="${(s.reliability_score/maxScore*100).toFixed(0)}"></span></span>
+    <span class="val">${s.reliability_score} · ${Math.round(s.on_time_rate*100)}% on-time</span>
+  </div>`).join("");
+
+// ---- Financial impact ----
+const maxCost = Math.max(...D.lines.map(l => l.expected_stoppage_cost), 1);
+$("lines").innerHTML = D.lines.slice().sort((a,b) => b.expected_stoppage_cost - a.expected_stoppage_cost).map(l => `
+  <div class="finrow">
+    <span class="name">${l.line_name}</span>
+    <span class="track"><span class="fill" data-w="${(l.expected_stoppage_cost/maxCost*100).toFixed(0)}"></span></span>
+    <span class="val">${fmt(l.expected_stoppage_cost)}</span>
+  </div>`).join("");
+
+// ---- Lookup / gauge ----
+$("part-ids").innerHTML = D.parts.map(p => `<option value="${p.part_id}">`).join("");
+const CIRC = 2 * Math.PI * 54; // 339.3
+
 function lookup() {
   const id = $("pid").value.trim().toUpperCase().replace(/[\s_]/g, "-");
   const p = D.parts.find(x => x.part_id === id);
-  $("out").textContent = p ? JSON.stringify({part_id:p.part_id, supplier:p.supplier, shortage_probability:p.shortage_prob, risk_band:p.risk_band,
-    recommended_reorder_date:p.reorder_by, days_of_cover:p.days_of_cover, estimated_lead_time_days:{typical:p.lead_p50, worst_case_p90:p.lead_p90}}, null, 2)
+  $("out").textContent = p
+    ? JSON.stringify({part_id:p.part_id, supplier:p.supplier, shortage_probability:p.shortage_prob, risk_band:p.risk_band,
+        recommended_reorder_date:p.reorder_by, days_of_cover:p.days_of_cover,
+        estimated_lead_time_days:{typical:p.lead_p50, worst_case_p90:p.lead_p90}}, null, 2)
     : JSON.stringify({detail: `No risk score for part '${id}'`}, null, 2);
+
+  if (!p) {
+    $("scan").classList.remove("show");
+    $("scanEmpty").textContent = `No risk score for '${id}'.`;
+    return;
+  }
+  $("scanEmpty").textContent = "";
+  $("scan").classList.add("show");
+  const color = RISK_COLOR[p.risk_band];
+  const pct = p.shortage_prob;
+  $("gaugeFill").style.stroke = color;
+  $("gaugeFill").style.strokeDashoffset = CIRC * (1 - pct);
+  $("gaugePct").textContent = Math.round(pct * 100) + "%";
+  $("gaugePct").style.color = color;
+  $("scanDetails").innerHTML = `
+    <div><div class="k">Description</div><div class="v full">${p.description}</div></div>
+    <div><div class="k">Supplier</div><div class="v">${p.supplier}</div></div>
+    <div><div class="k">Days of cover</div><div class="v">${p.days_of_cover}</div></div>
+    <div><div class="k">Lead time (typical)</div><div class="v">${Math.round(p.lead_p50)} d</div></div>
+    <div><div class="k">Lead time (worst case)</div><div class="v">${Math.round(p.lead_p90)} d</div></div>
+    <div><div class="k">Reorder by</div><div class="v ${p.reorder_by <= D.run_date ? "overdue" : ""}">${p.reorder_by}${p.reorder_by <= D.run_date ? " (overdue)" : ""}</div></div>`;
 }
-$("go").onclick = lookup; $("pid").onkeydown = e => e.key === "Enter" && lookup(); lookup();
+$("go").addEventListener("click", lookup);
+$("pid").addEventListener("keydown", (e) => { if (e.key === "Enter") lookup(); });
+
+// Staggered reveal + animate bar fills once visible
+window.addEventListener("load", () => {
+  document.querySelectorAll(".reveal").forEach((el, i) => setTimeout(() => el.classList.add("show"), i * 90));
+  setTimeout(() => document.querySelectorAll(".barrow .fill, .finrow .fill").forEach(f => f.style.width = f.dataset.w + "%"), 500);
+  lookup();
+});
 </script></body></html>
